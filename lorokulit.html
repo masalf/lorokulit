@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deteksi Penyakit Kulit</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            margin-top: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .camera-container {
+            width: 100%;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            border: 2px dashed #dce1e6;
+        }
+        
+        #video {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 10px;
+            background-color: #000;
+            display: none;
+        }
+        
+        #canvas {
+            display: none;
+        }
+        
+        .btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn-capture {
+            background-color: #2ecc71;
+        }
+        
+        .btn-capture:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-reset {
+            background-color: #e74c3c;
+        }
+        
+        .btn-reset:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-icon {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+        
+        .result-container {
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .result-title {
+            font-size: 20px;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .result-icon {
+            margin-right: 10px;
+            color: #3498db;
+        }
+        
+        .disease-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e8f4fc;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .confidence {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        
+        .confidence-bar {
+            flex-grow: 1;
+            height: 10px;
+            background-color: #ecf0f1;
+            border-radius: 5px;
+            margin: 0 10px;
+            overflow: hidden;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+            border-radius: 5px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+        
+        .confidence-value {
+            font-weight: bold;
+            min-width: 50px;
+        }
+        
+        .description {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .description h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .description p {
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .upload-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        #file-input {
+            display: none;
+        }
+        
+        .upload-label {
+            display: inline-block;
+            padding: 12px 25px;
+            background-color: #9b59b6;
+            color: white;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+        
+        .upload-label:hover {
+            background-color: #8e44ad;
+            transform: translateY(-2px);
+        }
+        
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .info-box {
+            background-color: #e8f4fc;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .info-box h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-icon {
+            margin-right: 10px;
+            color: #3498db;
+        }
+        
+        footer {
+            margin-top: 30px;
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Deteksi Penyakit Kulit</h1>
+            <p class="subtitle">Aplikasi AI untuk mengidentifikasi jenis penyakit kulit melalui gambar</p>
+        </header>
+        
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <img id="preview" class="preview-image" alt="Preview gambar">
+            
+            <div class="btn-container">
+                <button id="start-camera" class="btn">
+                    <span class="btn-icon">📷</span> Aktifkan Kamera
+                </button>
+                <button id="capture" class="btn btn-capture" disabled>
+                    <span class="btn-icon">⭕</span> Ambil Gambar
+                </button>
+                <button id="reset" class="btn btn-reset">
+                    <span class="btn-icon">🔄</span> Ulangi
+                </button>
+            </div>
+        </div>
+        
+        <div class="upload-container">
+            <input type="file" id="file-input" accept="image/*">
+            <label for="file-input" class="upload-label">
+                <span class="btn-icon">📁</span> Unggah Gambar
+            </label>
+        </div>
+        
+        <div class="loading">
+            <div class="spinner"></div>
+            <p>Menganalisis gambar...</p>
+        </div>
+        
+        <div class="result-container" id="result-container">
+            <h2 class="result-title">
+                <span class="result-icon">🔍</span> Hasil Deteksi
+            </h2>
+            <div class="disease-name" id="disease-name">-</div>
+            
+            <div class="confidence">
+                <span>Tingkat Kepercayaan:</span>
+                <div class="confidence-bar">
+                    <div class="confidence-level" id="confidence-level"></div>
+                </div>
+                <span class="confidence-value" id="confidence-value">0%</span>
+            </div>
+            
+            <div class="description">
+                <h3>Deskripsi Penyakit</h3>
+                <p id="disease-description">-</p>
+            </div>
+        </div>
+        
+        <div class="info-box">
+            <h3>
+                <span class="info-icon">ℹ️</span> Informasi Penting
+            </h3>
+            <p>Hasil deteksi ini hanya sebagai referensi awal. Untuk diagnosis yang akurat, konsultasikan dengan dokter kulit.</p>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Aplikasi Deteksi Penyakit Kulit &copy; 2023</p>
+    </footer>
+
+    <script>
+        // Elemen DOM
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const preview = document.getElementById('preview');
+        const startCameraBtn = document.getElementById('start-camera');
+        const captureBtn = document.getElementById('capture');
+        const resetBtn = document.getElementById('reset');
+        const fileInput = document.getElementById('file-input');
+        const resultContainer = document.getElementById('result-container');
+        const diseaseName = document.getElementById('disease-name');
+        const confidenceLevel = document.getElementById('confidence-level');
+        const confidenceValue = document.getElementById('confidence-value');
+        const diseaseDescription = document.getElementById('disease-description');
+        const loading = document.querySelector('.loading');
+        
+        // Dataset penyakit kulit (dalam aplikasi nyata, ini akan berasal dari model AI)
+        const skinDiseases = {
+            'jerawat': {
+                name: 'Jerawat (Acne Vulgaris)',
+                description: 'Jerawat adalah kondisi kulit yang terjadi ketika folikel rambut tersumbat oleh minyak dan sel kulit mati. Ditandai dengan komedo, papula, pustula, atau kista. Jerawat paling sering muncul di wajah, dada, dan punggung.',
+                confidence: 0
+            },
+            'eksim': {
+                name: 'Eksim (Dermatitis)',
+                description: 'Eksim adalah kondisi kulit yang menyebabkan kulit meradang, gatal, kemerahan, dan kering. Eksim dapat muncul di mana saja di tubuh dan seringkali bersifat kronis dengan periode flare-up dan remisi.',
+                confidence: 0
+            },
+            'psoriasis': {
+                name: 'Psoriasis',
+                description: 'Psoriasis adalah penyakit autoimun yang menyebabkan penumpukan sel kulit dengan cepat. Ditandai dengan bercak tebal, merah, bersisik keperakan. Psoriasis biasanya muncul di siku, lutut, kulit kepala, dan punggung bawah.',
+                confidence: 0
+            },
+            'kurap': {
+                name: 'Kurap (Tinea Corporis)',
+                description: 'Kurap adalah infeksi jamur pada kulit yang menyebabkan ruam melingkar dengan tepi yang menonjol dan bagian tengah yang bersih. Dapat terjadi di mana saja di tubuh dan sangat menular.',
+                confidence: 0
+            },
+            'kutil': {
+                name: 'Kutil (Verruca)',
+                description: 'Kutil adalah pertumbuhan kulit kecil dan kasar yang disebabkan oleh human papillomavirus (HPV). Kutil dapat muncul di mana saja di tubuh tetapi paling sering ditemukan di tangan dan kaki.',
+                confidence: 0
+            },
+            'herpes': {
+                name: 'Herpes Zoster',
+                description: 'Herpes zoster adalah infeksi virus yang menyebabkan ruam menyakitkan. Biasanya muncul sebagai garis lepuh di satu sisi tubuh, paling sering di batang tubuh, leher, atau wajah. Disebabkan oleh reaktivasi virus varicella-zoster.',
+                confidence: 0
+            },
+            'melanoma': {
+                name: 'Melanoma',
+                description: 'Melanoma adalah jenis kanker kulit yang paling serius. Berkembang di sel yang menghasilkan melanin (pigmen kulit). Dapat muncul sebagai tahi lalat baru atau perubahan pada tahi lalat yang sudah ada.',
+                confidence: 0
+            },
+            'rosacea': {
+                name: 'Rosacea',
+                description: 'Rosacea adalah kondisi kulit kronis yang menyebabkan kemerahan dan pembuluh darah terlihat di wajah. Dapat juga menghasilkan benjolan kecil, merah, berisi nanah. Gejala dapat kambuh selama berminggu-minggu hingga berbulan-bulan.',
+                confidence: 0
+            }
+        };
+        
+        let stream = null;
+        
+        // Fungsi untuk memulai kamera
+        startCameraBtn.addEventListener('click', async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                video.srcObject = stream;
+                video.style.display = 'block';
+                preview.style.display = 'none';
+                captureBtn.disabled = false;
+                startCameraBtn.disabled = true;
+            } catch (err) {
+                console.error('Error mengakses kamera:', err);
+                alert('Tidak dapat mengakses kamera. Pastikan Anda memberikan izin akses kamera.');
+            }
+        });
+        
+        // Fungsi untuk mengambil gambar dari kamera
+        captureBtn.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            // Konversi canvas ke data URL untuk preview
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+            preview.src = imageDataURL;
+            preview.style.display = 'block';
+            video.style.display = 'none';
+            
+            // Analisis gambar
+            analyzeImage(canvas);
+        });
+        
+        // Fungsi untuk mereset
+        resetBtn.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            video.style.display = 'block';
+            preview.style.display = 'none';
+            resultContainer.style.display = 'none';
+            captureBtn.disabled = false;
+            startCameraBtn.disabled = false;
+            fileInput.value = '';
+        });
+        
+        // Fungsi untuk mengunggah gambar
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                    video.style.display = 'none';
+                    
+                    if (stream) {
+                        stream.getTracks().forEach(track => track.stop());
+                    }
+                    
+                    // Analisis gambar
+                    const img = new Image();
+                    img.onload = () => {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const context = canvas.getContext('2d');
+                        context.drawImage(img, 0, 0);
+                        analyzeImage(canvas);
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Fungsi untuk menganalisis gambar (simulasi AI)
+        function analyzeImage(imageElement) {
+            loading.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            // Simulasi proses analisis AI (dalam aplikasi nyata, ini akan memanggil model ML)
+            setTimeout(() => {
+                // Pilih penyakit secara acak untuk simulasi
+                const diseaseKeys = Object.keys(skinDiseases);
+                const randomDiseaseKey = diseaseKeys[Math.floor(Math.random() * diseaseKeys.length)];
+                const detectedDisease = skinDiseases[randomDiseaseKey];
+                
+                // Hasil kepercayaan acak antara 70% - 95%
+                const confidence = Math.floor(Math.random() * 26) + 70;
+                
+                // Tampilkan hasil
+                displayResult(detectedDisease, confidence);
+                
+                loading.style.display = 'none';
+                resultContainer.style.display = 'block';
+            }, 2000);
+        }
+        
+        // Fungsi untuk menampilkan hasil
+        function displayResult(disease, confidence) {
+            diseaseName.textContent = disease.name;
+            diseaseDescription.textContent = disease.description;
+            
+            // Animasikan bar kepercayaan
+            setTimeout(() => {
+                confidenceLevel.style.width = `${confidence}%`;
+                confidenceValue.textContent = `${confidence}%`;
+            }, 100);
+        }
+        
+        // Inisialisasi
+        window.addEventListener('load', () => {
+            // Cek apakah browser mendukung akses kamera
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Browser Anda tidak mendukung akses kamera. Silakan gunakan browser modern seperti Chrome, Firefox, atau Safari.');
+                startCameraBtn.disabled = true;
+            }
+        });
+    </script>
+</body>
+</html>
